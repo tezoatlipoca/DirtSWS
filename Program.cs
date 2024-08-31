@@ -194,7 +194,16 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 
-
+app.MapGet("/about", async (HttpContext httpContext) =>
+{
+    string fn = "/about"; DBg.d(LogLevel.Trace, fn);
+    StringBuilder sb = new StringBuilder();
+    await GlobalStatic.GenerateHTMLHead(sb, "About");
+    sb.AppendLine("<h1>About</h1>");
+    sb.AppendLine("<p>This is a simple web server written in C# using ASP.NET Core.</p>");
+    await GlobalStatic.GeneratePageFooter(sb);
+    return Results.Text(sb.ToString(), "text/plain");
+}).AllowAnonymous();
 
 
 

@@ -32,3 +32,30 @@ Options:
 - index - what page/file requests for `/` are sent to. 
 
 # Using
+Run the executable as above. 
+
+If the webserver has bound to the right IP address and port
+AND that port is open in the computer's firewall
+then pointing a browser to `http://<your hostname>/about` should show: 
+
+> **About**
+> This is a simple web server written in C# using ASP.NET Core.
+
+(that's all that special endpoint does)
+
+Other special endpoints:
+`/files` - shows all files in the `wwwroot` folder with your static files
+`/login` - lets you login to use `/files`
+
+## File Management
+If the `wwwroot` folder you gave to DirtSWS when it started already has static files in it then
+DirtSWS should host them already. For example if your specified `wwwroot` folder is `D:\static`
+and it contains a file called `foo.html` then DirtSWS should host that file at `http://<hostname>/foo.html`
+
+If your `wwwroot` does not have any files, navigate to `http://<hostname>/files` then click on **Upload a file**. If successful, the upload screen redirects to the files listing. 
+Likewise, the **Delete** link beside each filename deletes the file and the files listing refreshes. 
+
+# Future work
+1. Secure host (https) w/ SSL Certificates - although you can get this for cheap if you use NGINX _in front_ of DirtSWS
+2. Automatic maintenance/renewal of SSL certficiates w/ LetsEncrypt.org
+3. Provide a facility that lets you check to see if your site is reachable, ports are open in firewall etc. using an external talkback facility. 

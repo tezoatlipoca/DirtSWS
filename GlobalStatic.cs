@@ -67,7 +67,7 @@ public static class GlobalStatic
         sb.AppendLine($"<p style=\"color: red;\">Page not found</p>");
         sb.AppendLine($"<p>Requested path: {requestPath}</p>");
         sb.AppendLine($"<p>You are: {userInfo}</p>");
-        sb.AppendLine("<p>Go back to <a href=\"/index.html\">the index page?</a></p>");
+        sb.AppendLine($"<p>Go back to <a href=\"{GlobalConfig.index}\">the index page?</a></p>");
         await GeneratePageFooter(sb);
         return sb;
     }

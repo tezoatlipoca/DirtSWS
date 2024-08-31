@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.HttpOverrides;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.FileProviders;
 
 
 
@@ -186,7 +187,11 @@ app.Use(async (context, next) =>
 
 
 //app.UseHttpsRedirection();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(GlobalConfig.wwwroot)),
+    RequestPath = ""    // host this at the root. FUTURE: make this configurable
+});
 
 
 

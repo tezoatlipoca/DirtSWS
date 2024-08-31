@@ -78,7 +78,7 @@ public static class GlobalConfig
                     index = splitArg[1];
                     break;
                 case "--help":
-                    Console.WriteLine("Usage: dotnet run -- [options]");
+                    Console.WriteLine("Usage: ./DirtSWS(.exe) -- [options]");
                     Console.WriteLine("Options:");
                     Console.WriteLine("--port=PORT\t\t\tPort to listen on. Default is 5000");
                     Console.WriteLine("--bind=IP\t\t\tIP address to bind to. Default is *");

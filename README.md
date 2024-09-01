@@ -21,7 +21,7 @@ Options:
 ### Notes
 - Port - make sure this is open in your firewall
 - bind - `*` should be fine for all uses, but where you have multiple network adapters, specify the IP address (not interface) to bind to e.g. `192.168.17.4`
-- hostname - this isn't used for anything at the moment but there are future plans for it.
+- hostname - this isn't used for anything at the moment (other than generated page footers) but there are future plans for it.
 - wwwroot - can be any folder, but if specified, has to be absolute e.g. `D:\statichtml` or `/home/user/statichtml` not `~/static` or `../relative/`. The user DirtSWS is running as must have read access to this folder to serve pages from it, and must have write access if using the file management features. 
 - runlevel - Microsoft log levels: trace, debug, info, warn, critical - only msgs at the specified loglevel or above are shown. `trace` is most verbose. All incoming URL and requesting IPs are logged at `info`
 - pwd - there are no users or roles; if you specify a password, file management pages are enabled.. if not, they aren't. If you try to access a file management page and haven't provided the pwd, you're redirected to a login page where you can specify the pwd.

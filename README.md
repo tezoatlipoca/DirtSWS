@@ -54,6 +54,11 @@ If your `wwwroot` does not have any files, navigate to `http://<hostname>/files`
 Likewise, the **Delete** link beside each filename deletes the file and the files listing refreshes. 
 
 # Installation
+**Remember** 
+- if you run the program without specifying a password you can't get into the filemanagement screens
+- if the wwwroot you specify doesn't have anything in it when you start DirtSWS you won't see anything
+- if you don't specify an index page and/or that index page isn't in your wwwroot folder, that won't work either.
+
 ## Linux x64
 1. Dump the exe somewhere and `chmod` it so its runnable by whatever user you want to run it.
 2. create a script that be used to run it manually or as a service with all the parameters you want. Here's one:

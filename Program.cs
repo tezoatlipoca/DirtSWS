@@ -199,10 +199,9 @@ app.MapGet("/about", async (HttpContext httpContext) =>
     string fn = "/about"; DBg.d(LogLevel.Trace, fn);
     StringBuilder sb = new StringBuilder();
     await GlobalStatic.GenerateHTMLHead(sb, "About");
-    sb.AppendLine("<h1>About</h1>");
     sb.AppendLine("<p>This is a simple web server written in C# using ASP.NET Core.</p>");
     await GlobalStatic.GeneratePageFooter(sb);
-    return Results.Text(sb.ToString(), "text/plain");
+    return Results.Text(sb.ToString(), "text/html");
 }).AllowAnonymous();
 
 
@@ -211,7 +210,6 @@ app.MapGet("/login", async (HttpContext httpContext) => {
     string fn = "/login"; DBg.d(LogLevel.Trace, fn);
     StringBuilder sb = new StringBuilder();
     await GlobalStatic.GenerateHTMLHead(sb, "Login");
-    sb.AppendLine("<h1>Login</h1>");
     if(GlobalConfig.messagebox != null)
     {
         sb.AppendLine($"<span style=\"color: red;\">{GlobalConfig.messagebox}</span>");
@@ -271,7 +269,7 @@ app.MapGet("/files", async (HttpContext httpContext) =>
     string fn = "/files (GET)"; DBg.d(LogLevel.Trace, fn);
     StringBuilder sb = new StringBuilder();
     await GlobalStatic.GenerateHTMLHead(sb, "Files");
-    sb.AppendLine("<h1>Files</h1>");
+    
     sb.AppendLine("<p><a href=\"/upload\">Upload a file</a></p>");
     sb.AppendLine("<ul>");
     // get a list of files in GlobalConfig.wwwroot
@@ -337,9 +335,9 @@ app.MapGet("/upload", async context =>
     var tokens = antiforgery.GetAndStoreTokens(context);
     var token = tokens.RequestToken;
     StringBuilder sb = new StringBuilder();
-    await GlobalStatic.GenerateHTMLHead(sb, "Upload");
+    await GlobalStatic.GenerateHTMLHead(sb, "Upload a file");
     var html = $@"
-    <h1>Upload a file</h1>
+    
     <script>
         async function uploadFile() {{
             const form = document.getElementById('uploadForm');

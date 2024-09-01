@@ -78,6 +78,13 @@ pwd
 No work has been done to make DirtSWS run as a Windows Service yet, but supposedly its possible
 with the use of 3rd party tools such as https://nssm.cc/ (the Non-Sucking Service Manager (for Windows)).
 
+## Reverse Proxy usage
+Should work fine behind reverse proxies like NGINX (tested) and Apache (untested).. however it is 
+very likely that you will have to adjust the max form body allowable to clients _through_ the proxy
+in order to upload big files. 
+
+NGINX's default is 1MB, change that to something bigger like 25MB with a `client_max_body_size 25M;` directive in your website `.conf` file. 
+
 ## What's appsettings.json for?
 The ASP.NET.CORE runtimes look to this file for various non-default settings; in this case the 
 ```

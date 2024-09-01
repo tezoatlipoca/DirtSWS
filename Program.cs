@@ -178,7 +178,7 @@ app.Use(async (context, next) =>
                     type = antiForgeryEx.GetType().Name
                 }
             };
-
+            context.Response.ContentType = "text/html";
             await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(responseBody));
 
             return;
@@ -369,7 +369,8 @@ app.MapGet("/upload", async context =>
         <button type='submit'>Upload</button>
     </form>";
     sb.AppendLine(html);
-    await GlobalStatic.GeneratePageFooter(sb);    
+    await GlobalStatic.GeneratePageFooter(sb); 
+    context.Response.ContentType = "text/html";   
     await context.Response.WriteAsync(sb.ToString());
 }).RequireAuthorization(new AuthorizeAttribute
 {

@@ -1,14 +1,11 @@
 # DirtSWS - the Dirt Simple WebServer
-A single binary standalone web server with integraded (and very basic) file upload capabilities. 
+A dirt simple single binary standalone web server with integrated (and very basic) file upload & management capabilities. 
 
 # To run
 
 `./DirtSWS --help` to show usage: 
 
 ```
-2024-08-31T14:36:07 DEBUG | [CommandLineParse//GlobalConfig.cs:37] Startup
-2024-08-31T14:36:07 TRACE | [CommandLineParse//GlobalConfig.cs:40] Startup command line argument 0 is --help
-Usage: dotnet run -- [options]
 Options:
 --port=PORT                     Port to listen on. Default is 5000
 --bind=IP                       IP address to bind to. Default is *
@@ -55,7 +52,37 @@ and it contains a file called `foo.html` then DirtSWS should host that file at `
 If your `wwwroot` does not have any files, navigate to `http://<hostname>/files` then click on **Upload a file**. If successful, the upload screen redirects to the files listing. 
 Likewise, the **Delete** link beside each filename deletes the file and the files listing refreshes. 
 
+# Installation
+## Linux x64
+1. Dump the exe somewhere and `chmod` it so its runnable by whatever user you want to run it.
+2. create a script that be used to run it manually or as a service with all the parameters you want. Here's one:
+```
+#!/bin/bash
+echo "running.."
+cd /home/tezoatlipoca/bin/dirt
+pwd
+./DirtSWS --bind=10.0.0.55 --port=8039 --hostname=http://static.awadwatt.com --pwd=Foo --wwwroot=/home/tezoatlipoca/mystaticpage --runlevel=trace > output.log 2>&1
+```
+3. if you want to run as a service, create an `initd` or `systemd` entry for it the usual way. 
+
+## Windows
+1. Dump the program somewhere
+2. create a powershell script or batch file that runs it with all the parameters you want.
+
+No work has been done to make DirtSWS run as a Windows Service yet, but supposedly its possible
+with the use of 3rd party tools such as https://nssm.cc/ (the Non-Sucking Service Manager (for Windows)).
+
+## What's appsettings.json for?
+The ASP.NET.CORE runtimes look to this file for various non-default settings; in this case the 
+```
+  "Logging": {
+    "LogLevel": {
+      "Default": "Warning"
+```
+tells the Kestrel webserver engine to not spam a bunch of `info` msgs about every. single. page. request to STDOUT. 
+
 # Future work
+0. get this working/cross-compiling for MacOS, linux-arm64 etc. etc. would be nice to have binaries for every platform .NET Core supports (I just don't have any way to test these)
 1. Secure host (https) w/ SSL Certificates - although you can get this for cheap if you use NGINX _in front_ of DirtSWS
 2. Automatic maintenance/renewal of SSL certficiates w/ LetsEncrypt.org
 3. Provide a facility that lets you check to see if your site is reachable, ports are open in firewall etc. using an external talkback facility. 

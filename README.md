@@ -11,7 +11,7 @@ Options:
 --bind=IP                       IP address to bind to. Default is *
 --hostname=URL                  URL to use in links. Default is http://localhost
 --wwwroot=PATH                  Path to the wwwroot directory. Default is <current directory>/wwwroot
---runlevel=LEVEL                        Log level. Default is Information
+--runlevel=LEVEL                        Log level. Default is info (Information)
 --pwd=PASSWORD                  Admin password; REQUIRED for file management; leave empty for read-only static site
 --sitecss=URL                   URL to the site stylesheet. Default is null
 --sitepng=URL                   URL to the site favicon.ico. Default is null

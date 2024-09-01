@@ -1,5 +1,6 @@
 # DirtSWS - the Dirt Simple WebServer
 A dirt simple single binary standalone web server with integrated (and very basic) file upload & management capabilities. 
+Written using .NET.Core 8
 
 # To run
 

@@ -81,7 +81,8 @@ with the use of 3rd party tools such as https://nssm.cc/ (the Non-Sucking Servic
 ## Reverse Proxy usage
 Should work fine behind reverse proxies like NGINX (tested) and Apache (untested).. however it is 
 very likely that you will have to adjust the max form body allowable to clients _through_ the proxy
-in order to upload big files. 
+in order to upload big files. Otherwise your proxy will just cut off the upload beyond this size
+and DirtSWS will very unhelpfully report "File upload failed."
 
 NGINX's default is 1MB, change that to something bigger like 25MB with a `client_max_body_size 25M;` directive in your website `.conf` file. 
 

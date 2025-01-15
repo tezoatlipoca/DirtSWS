@@ -51,22 +51,22 @@ builder.Services.AddAuthentication(options =>
     options.Events.OnRedirectToAccessDenied = async context =>
     {
         var fn = "cookie middleware"; DBg.d(LogLevel.Trace, $"{fn} - OnRedirectToAccessDenied");
-        
+
         // we want to differentiate between requests from our javascript front end
         // logic vs. requests on the endpoints directly. our javascript gets a code
         // and it will figure out how to handle it/present to user. 
         //
         // 403 is "i know who you are you just can't do this"
         // 401 is "i don't know who you are, go log in"
-        
-            var sb = new StringBuilder();
-            string requestedUrl = context.Request.Path + context.Request.QueryString;
-            string msg = $"403 -You are not authorized to access {requestedUrl}";
-            await GlobalStatic.GenerateUnAuthPage(sb, msg);
-            DBg.d(LogLevel.Trace, $"Cookie - OnRedirectToAccessDenied [web] {msg}");
-            var result = Results.Content(sb.ToString(), "text/html");
-            await result.ExecuteAsync(context.HttpContext);
-        
+
+        var sb = new StringBuilder();
+        string requestedUrl = context.Request.Path + context.Request.QueryString;
+        string msg = $"403 -You are not authorized to access {requestedUrl}";
+        await GlobalStatic.GenerateUnAuthPage(sb, msg);
+        DBg.d(LogLevel.Trace, $"Cookie - OnRedirectToAccessDenied [web] {msg}");
+        var result = Results.Content(sb.ToString(), "text/html");
+        await result.ExecuteAsync(context.HttpContext);
+
     };
     // this is what fires when the user has not logged in yet; 401 Unauthorized
     // rationale for 401 when unauth, but a redirect when insufficiently authed
@@ -74,15 +74,15 @@ builder.Services.AddAuthentication(options =>
     options.Events.OnRedirectToLogin = async context =>
     {
         var fn = "cookie middleware"; DBg.d(LogLevel.Trace, $"{fn} - OnRedirectToLogin");
-        
-            var sb = new StringBuilder();
-            string requestedUrl = context.Request.Path + context.Request.QueryString;
-            string msg = $"401 - You need to <a href=\"/login\">LOGIN</a> to access {requestedUrl}";
-            await GlobalStatic.GenerateUnAuthPage(sb, msg);
-            DBg.d(LogLevel.Trace, $"{fn} - OnRedirectToLogin [web] {msg}");
-            var result = Results.Content(sb.ToString(), "text/html");
-            await result.ExecuteAsync(context.HttpContext);
-        
+
+        var sb = new StringBuilder();
+        string requestedUrl = context.Request.Path + context.Request.QueryString;
+        string msg = $"401 - You need to <a href=\"/login\">LOGIN</a> to access {requestedUrl}";
+        await GlobalStatic.GenerateUnAuthPage(sb, msg);
+        DBg.d(LogLevel.Trace, $"{fn} - OnRedirectToLogin [web] {msg}");
+        var result = Results.Content(sb.ToString(), "text/html");
+        await result.ExecuteAsync(context.HttpContext);
+
     };
 });
 
@@ -98,7 +98,7 @@ builder.Services.AddAuthorization(options =>
 
 //builder.Services.AddControllersWithViews();
 
-builder.Services.AddAntiforgery(options => 
+builder.Services.AddAntiforgery(options =>
 {
     options.HeaderName = "X-CSRF-TOKEN";
 });
@@ -137,14 +137,23 @@ app.Use(async (context, next) =>
     {
         var fn = "_Middleware.Use_"; //DBg.d(LogLevel.Trace, fn);
 
-        
+
         var remoteIpAddress = context.Connection.RemoteIpAddress;
+        var forwardedHeader = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+
+        if (!string.IsNullOrEmpty(forwardedHeader))
+        {
+            // The X-Forwarded-For header can contain multiple IP addresses in case of multiple proxies.
+            // The first IP address in the list is the original client's IP address.
+            var originalIpAddress = forwardedHeader.Split(',').First().Trim();
+            remoteIpAddress = System.Net.IPAddress.Parse(originalIpAddress);
+        }
         //DBg.d(LogLevel.Trace, $"{fn} Request origin: {origin} - from {remoteIpAddress}");
 
         var path = context.Request.Path.Value;
         string msg = $"{path} <-- from {remoteIpAddress}";
         DBg.d(LogLevel.Information, msg);
-        
+
         // otherwise, do the normal thing
         try
         {
@@ -206,11 +215,12 @@ app.MapGet("/about", async (HttpContext httpContext) =>
 
 
 
-app.MapGet("/login", async (HttpContext httpContext) => {
+app.MapGet("/login", async (HttpContext httpContext) =>
+{
     string fn = "/login"; DBg.d(LogLevel.Trace, fn);
     StringBuilder sb = new StringBuilder();
     await GlobalStatic.GenerateHTMLHead(sb, "Login");
-    if(GlobalConfig.messagebox != null)
+    if (GlobalConfig.messagebox != null)
     {
         sb.AppendLine($"<span style=\"color: red;\">{GlobalConfig.messagebox}</span>");
         GlobalConfig.messagebox = null;
@@ -269,7 +279,7 @@ app.MapGet("/files", async (HttpContext httpContext) =>
     string fn = "/files (GET)"; DBg.d(LogLevel.Trace, fn);
     StringBuilder sb = new StringBuilder();
     await GlobalStatic.GenerateHTMLHead(sb, "Files");
-    
+
     sb.AppendLine("<p><a href=\"/upload\">Upload a file</a></p>");
     sb.AppendLine("<ul>");
     // get a list of files in GlobalConfig.wwwroot
@@ -287,7 +297,7 @@ app.MapGet("/files", async (HttpContext httpContext) =>
 
     return Results.Content(sb.ToString(), "text/html");
 
-    
+
 }).RequireAuthorization(new AuthorizeAttribute
 {
     AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme,
@@ -309,7 +319,7 @@ app.MapGet("/delete/{filename}", async (string filename, HttpContext httpContext
     {
         return Results.NotFound();
     }
-    
+
 }).RequireAuthorization(new AuthorizeAttribute
 {
     AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme,
@@ -369,8 +379,8 @@ app.MapGet("/upload", async context =>
         <button type='submit'>Upload</button>
     </form>";
     sb.AppendLine(html);
-    await GlobalStatic.GeneratePageFooter(sb); 
-    context.Response.ContentType = "text/html";   
+    await GlobalStatic.GeneratePageFooter(sb);
+    context.Response.ContentType = "text/html";
     await context.Response.WriteAsync(sb.ToString());
 }).RequireAuthorization(new AuthorizeAttribute
 {

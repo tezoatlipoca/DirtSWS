@@ -4,9 +4,11 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-     <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
+     <!--<RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>-->
+     <RuntimeIdentifiers>win-x64;linux-x64;win-x86;linux-arm;linux-arm64;osx-x64;osx-arm64</RuntimeIdentifiers>
      <PublishSingleFile>true</PublishSingleFile>
      <PublishTrimmed>true</PublishTrimmed>
+      <IncludeAllContentForSelfExtract>false</IncludeAllContentForSelfExtract>
   </PropertyGroup>
 
 <PropertyGroup>

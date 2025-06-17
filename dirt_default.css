@@ -1,0 +1,52 @@
+body {
+    background: #2a2255; /* deep blue-purple */
+    color: #e0d7ff;      /* light lavender */
+    font-family: 'Segoe UI', 'Arial', 'Helvetica Neue', sans-serif;
+    margin: 0;
+    padding: 2em;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #a084ee; /* soft purple */
+    font-family: inherit;
+}
+
+code, pre, kbd, samp {
+    color: #00e0ff; /* bright blue-cyan */
+    background: #3a2a5d; /* muted purple */
+    font-family: 'Fira Mono', 'Consolas', 'Menlo', 'Monaco', monospace;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+pre {
+    padding: 1em;
+    overflow-x: auto;
+}
+
+a {
+    color: #7ec4ff; /* light blue */
+}
+
+a:visited {
+    color: #b388ff; /* light purple */
+}
+
+a:hover, a:active {
+    color: #e0aaff; /* pinkish purple */
+}
+
+footer {
+    margin-top: 2em;
+    color: #bbaaff; /* muted lavender */
+    font-size: 0.95em;
+    background: #211a3a; /* dark purple */
+    border: 2px solid #3a2a5d;
+    border-radius: 6px;
+    padding: 1em;
+    box-sizing: border-box;
+}
+
+.byline {
+    margin-bottom: 0.5em;
+}

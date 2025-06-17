@@ -206,11 +206,11 @@ app.UseStaticFiles(new StaticFileOptions
 app.MapGet("/about", async (HttpContext httpContext) =>
 {
     string fn = "/about"; DBg.d(LogLevel.Trace, fn);
-    StringBuilder sb = new StringBuilder();
-    await GlobalStatic.GenerateHTMLHead(sb, "About");
-    sb.AppendLine("<p>This is a simple web server written in C# using ASP.NET Core.</p>");
-    await GlobalStatic.GeneratePageFooter(sb);
-    return Results.Text(sb.ToString(), "text/html");
+    // StringBuilder sb = new StringBuilder();
+    // GlobalStatic.GenerateHTMLHead(sb, "About");
+    // sb.AppendLine("<p>This is a simple web server written in C# using ASP.NET Core.</p>");
+    // GlobalStatic.GeneratePageFooter(sb);
+    return Results.Text(GlobalStatic.staticAboutPage, "text/html");
 }).AllowAnonymous();
 
 
@@ -219,7 +219,7 @@ app.MapGet("/login", async (HttpContext httpContext) =>
 {
     string fn = "/login"; DBg.d(LogLevel.Trace, fn);
     StringBuilder sb = new StringBuilder();
-    await GlobalStatic.GenerateHTMLHead(sb, "Login");
+    GlobalStatic.GenerateHTMLHead(sb, "Login");
     if (GlobalConfig.messagebox != null)
     {
         sb.AppendLine($"<span style=\"color: red;\">{GlobalConfig.messagebox}</span>");
@@ -230,7 +230,7 @@ app.MapGet("/login", async (HttpContext httpContext) =>
     sb.AppendLine("<input type=\"password\" id=\"password\" name=\"password\"><br><br>");
     sb.AppendLine("<input type=\"submit\" value=\"Submit\">");
     sb.AppendLine("</form>");
-    await GlobalStatic.GeneratePageFooter(sb);
+    GlobalStatic.GeneratePageFooter(sb);
     return Results.Content(sb.ToString(), "text/html");
 }).AllowAnonymous();
 
@@ -278,22 +278,30 @@ app.MapGet("/files", async (HttpContext httpContext) =>
 {
     string fn = "/files (GET)"; DBg.d(LogLevel.Trace, fn);
     StringBuilder sb = new StringBuilder();
-    await GlobalStatic.GenerateHTMLHead(sb, "Files");
+    GlobalStatic.GenerateHTMLHead(sb, "Files");
 
     sb.AppendLine("<p><a href=\"/upload\">Upload a file</a></p>");
     sb.AppendLine("<ul>");
     // get a list of files in GlobalConfig.wwwroot
     var files = Directory.GetFiles(GlobalConfig.wwwroot);
-    // for each file, strip off the root path and add a link to the file; also add a
-    // link to delete the file.  
-    foreach (var file in files)
+    // if there are no files just say so
+    if (files.Length == 0)
     {
-        var fileName = Path.GetFileName(file);
-        var fileModificationDate = File.GetLastWriteTime(file);
-        sb.AppendLine($"<li>{fileModificationDate} <a href=\"/{fileName}\">{fileName}</a> <a href=\"/delete/{fileName}\">Delete</a></li>");
+        sb.AppendLine("<li><b>No files found.</b></li>");
+    }
+    else
+    {
+        // for each file, strip off the root path and add a link to the file; also add a
+        // link to delete the file.  
+        foreach (var file in files)
+        {
+            var fileName = Path.GetFileName(file);
+            var fileModificationDate = File.GetLastWriteTime(file);
+            sb.AppendLine($"<li>{fileModificationDate} <a href=\"/{fileName}\">{fileName}</a> <a href=\"/delete/{fileName}\">Delete</a></li>");
+        }
     }
     sb.AppendLine("</ul>");
-    await GlobalStatic.GeneratePageFooter(sb);
+    GlobalStatic.GeneratePageFooter(sb);
 
     return Results.Content(sb.ToString(), "text/html");
 
@@ -345,7 +353,7 @@ app.MapGet("/upload", async context =>
     var tokens = antiforgery.GetAndStoreTokens(context);
     var token = tokens.RequestToken;
     StringBuilder sb = new StringBuilder();
-    await GlobalStatic.GenerateHTMLHead(sb, "Upload a file");
+    GlobalStatic.GenerateHTMLHead(sb, "Upload a file");
     var html = $@"
     
     <script>
@@ -372,14 +380,14 @@ app.MapGet("/upload", async context =>
             }}
         }}
     </script>
-
+    <p><a href='/files'>Back to files</a></p>
     <form id='uploadForm' enctype='multipart/form-data' onsubmit='event.preventDefault(); uploadFile();'>
         <input type='file' name='file' required />
         <input type='hidden' name='__RequestVerificationToken' value='{token}' />
         <button type='submit'>Upload</button>
     </form>";
     sb.AppendLine(html);
-    await GlobalStatic.GeneratePageFooter(sb);
+    GlobalStatic.GeneratePageFooter(sb);
     context.Response.ContentType = "text/html";
     await context.Response.WriteAsync(sb.ToString());
 }).RequireAuthorization(new AuthorizeAttribute
@@ -473,6 +481,20 @@ app.MapGet("/", async (HttpContext httpContext) =>
     return Results.Redirect(GlobalConfig.index);
 }).AllowAnonymous();
 
+
+app.MapGet("/checkprogress/{token}", (string token) =>
+{
+    var status = ProcessTracker.GetProcessStatus(token);
+    return Results.Ok(status);
+
+});
+
+app.MapGet("/shitsgoingon", () =>
+{
+    var status = ProcessTracker.ShitsGoingOn();
+    return Results.Ok(status);
+
+});
 
 // Mutex to ensure only one of us is running
 

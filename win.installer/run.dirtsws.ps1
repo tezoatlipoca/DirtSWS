@@ -1,35 +1,34 @@
-# Example PowerShell script to run DirtSWS with all command line options
+# PowerShell script to run DirtSWS with all actual command line options
 
-# Set the path to your DirtSWS executable
-$exe = ".\DirtSWS.exe"
+$exe = "C:\Program Files (x86)\DirtSWS\DirtSWS.exe"
 
-# Example command line options (update these to match your actual options)
-# Replace with the actual options supported by DirtSWS
-$wwwroot = "wwwroot"
-$port = 8080
-$bind = "0.0.0.0"
-$loglevel = "Information"
-$config = "config.json"
+# Set your desired values for each option below
+$port = 5000
+$bind = "*" # Use "*" for all IPs, or specify an IP
+$hostname = "http://localhost:5000" 
+$wwwroot = "c:\users\vboxuser\Desktop\wwwroot" # ABSOLUTE PATH; where the files are kept; somewhere the app has permission to write to. 
+$runlevel = "Information" # Valid: Trace, Debug, Information (default), Warn, Error, Fatal
+$pwd = "Foo" # Leave empty for read-only static site
+$sitecss = "c:\Program Files (x86)\DirtSWS\dirt_default.css" # ABSOLUTE Path or URL to stylesheet, or leave empty
+$sitepng = "c:\Program Files (x86)\DirtSWS\dirt_default_icon.png" # ABSOLUTE Path or URL to favicon (PNG), or leave empty
+$siteinfo = "&lt;YOU PUT YOUR INFO HERE&gt;"
 $index = "index.html"
-$siteinfo = "My DirtSWS Instance"
-$cookieDomain = "localhost"
-$otherOption = "value"
+$maxuploadsize = 104857600 # 100MB default
 
-# Build the argument list
 $args = @(
-    "--wwwroot", $wwwroot
-    "--port", $port
-    "--bind", $bind
-    "--loglevel", $loglevel
-    "--config", $config
-    "--index", $index
-    "--siteinfo", "`"$siteinfo`""
-    "--cookieDomain", $cookieDomain
-    # Add other options here as needed
-    # "--otherOption", $otherOption
+    "--port=$port"
+    "--bind=$bind"
+    "--hostname=$hostname"
+    "--wwwroot=$wwwroot"
+    "--runlevel=$runlevel"
+    "--pwd=$pwd"
+    "--sitecss=$sitecss"
+    "--sitepng=$sitepng"
+    "--siteinfo=$siteinfo"
+    "--index=$index"
+    "--maxuploadsize=$maxuploadsize"
 )
 
-# Run DirtSWS with all options
 Write-Host "Running DirtSWS with options:"
 Write-Host "$exe $($args -join ' ')"
-& $exe @args
+& $exe $args

@@ -31,6 +31,8 @@ public static class GlobalConfig
     public static string? siteInformation { get; set; } = null;
 
     public static string? index { get; set; } = "index.html";
+    
+    public static long MaxUploadSize { get; set; } = 104857600; // 100 MB default
 
     // parses the command line arguments
     public static bool CommandLineParse(string[] args)
@@ -77,8 +79,15 @@ public static class GlobalConfig
                     break;
                 case "--sitepng":
                     sitepng = splitArg[1];
-					DBg.d(LogLevel.Information, $"Admin page favicon.ico (png file): {sitepng}");
-					readSitePNG(sitepng);
+                    DBg.d(LogLevel.Information, $"Admin page favicon.ico (png file): {sitepng}");
+                    readSitePNG(sitepng);
+                    break;
+                case "--maxuploadsize":
+                    if (long.TryParse(splitArg[1], out long maxUploadSize))
+                    {
+                        DBg.d(LogLevel.Information, $"Max upload size set to {maxUploadSize} bytes");
+                        MaxUploadSize = maxUploadSize;
+                    }
                     break;
                 case "--index":
                     index = splitArg[1];
@@ -96,6 +105,7 @@ public static class GlobalConfig
                     Console.WriteLine("--sitepng=URL\t\t\tURL to the site favicon.ico. Default is null");
                     Console.WriteLine("--siteinfo=info\t\t\tOwner of this site, contact info.");
                     Console.WriteLine("--index=FILE\t\t\tDefault site index page. Default is index.html");
+                    Console.WriteLine("--maxuploadsize=SIZE\t\tMaximum upload size in bytes. Default is 100MB (104857600 bytes)");
                     Environment.Exit(0);
                     break;
                 case "--siteinfo":
@@ -131,16 +141,17 @@ public static class GlobalConfig
         {
             wwwroot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
         }
-        DBg.d(LogLevel.Information, $"wwwroot: {wwwroot}");    
+        DBg.d(LogLevel.Information, $"wwwroot: {wwwroot}");
         if (!Directory.Exists(wwwroot))
-            {
-                Directory.CreateDirectory(wwwroot);
-                DBg.d(LogLevel.Information, $"Created wwwroot directory: {wwwroot}");
-            }
-        else {
+        {
+            Directory.CreateDirectory(wwwroot);
+            DBg.d(LogLevel.Information, $"Created wwwroot directory: {wwwroot}");
+        }
+        else
+        {
             DBg.d(LogLevel.Information, $"wwwroot directory exists: {wwwroot}");
         }
-        
+
         DBg.d(LogLevel.Information, $"Admin page stylesheet: {sitecss}");
         DBg.d(LogLevel.Information, $"Admin page favicon.ico: {sitepng}");
         DBg.d(LogLevel.Information, $"Default site index: {index}");
@@ -151,7 +162,7 @@ public static class GlobalConfig
         if (bldVersionAttribute?.InformationalVersion != null)
         {
             string fullVersion = bldVersionAttribute.InformationalVersion;
-            
+
             // Check if the version contains a '+' which separates version from git hash
             int plusIndex = fullVersion.IndexOf('+');
             if (plusIndex >= 0 && plusIndex < fullVersion.Length - 1)
@@ -159,13 +170,13 @@ public static class GlobalConfig
                 // Extract the base version and git hash
                 string baseVersion = fullVersion.Substring(0, plusIndex);
                 string gitHash = fullVersion.Substring(plusIndex + 1);
-                
+
                 // Truncate git hash to 7 characters if it's longer
                 if (gitHash.Length > 7)
                 {
                     gitHash = gitHash.Substring(0, 7);
                 }
-                
+
                 // Combine the base version with the truncated git hash
                 bldVersion = $"{baseVersion}+{gitHash}";
             }

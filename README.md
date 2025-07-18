@@ -12,11 +12,12 @@ Options:
 --bind=IP                       IP address to bind to. Default is *
 --hostname=URL                  URL to use in links. Default is http://localhost
 --wwwroot=PATH                  Path to the wwwroot directory. Default is <current directory>/wwwroot
---runlevel=LEVEL                        Log level. Default is info (Information)
+--runlevel=LEVEL                Log level. Default is info (Information)
 --pwd=PASSWORD                  Admin password; REQUIRED for file management; leave empty for read-only static site
---sitecss=URL                   URL to the site stylesheet. Default is null
---sitepng=URL                   URL to the site favicon.ico. Default is null
+--sitecss=URL                   path to the site stylesheet. Read once on startup; embedded in all admin pages.
+--sitepng=URL                   path to the site favicon.ico. Read once on startup; embedded in all admin pages.
 --index=FILE                    Default site index page. Default is index.html
+--maxuploadsize=SIZE            Maximum upload size in bytes. Default is 100MB (104857600 bytes)"
 ```
 ### Notes
 - Port - make sure this is open in your firewall
@@ -28,6 +29,7 @@ Options:
 - sitecss - provide the filename (in your wwwroot or elsewhere) of the stylesheet you want to use for the administrative pages. 
 - sitepng - provide the icon image file (in your wwwroot or elsewhere) to use for favicon.ico for the administrative pages. 
 - index - what page/file requests for `/` are sent to. 
+- maxuploadsize - largest allowed upload _individual_ file size in bytes; there is no guard against 
 
 # Using
 Run the executable as above. 
@@ -50,7 +52,7 @@ If the `wwwroot` folder you gave to DirtSWS when it started already has static f
 DirtSWS should host them already. For example if your specified `wwwroot` folder is `D:\static`
 and it contains a file called `foo.html` then DirtSWS should host that file at `http://<hostname>/foo.html`
 
-If your `wwwroot` does not have any files, navigate to `http://<hostname>/files` then click on **Upload a file**. If successful, the upload screen redirects to the files listing. 
+If your `wwwroot` does not have any files, navigate to `http://<hostname>/files` then click on **Upload a file** and select one or more files. If successful, the upload screen redirects to the files listing. 
 Likewise, the **Delete** link beside each filename deletes the file and the files listing refreshes. 
 
 # Installation

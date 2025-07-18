@@ -44,26 +44,27 @@ public static class GlobalStatic
         sb.AppendLine("</head>");
         sb.AppendLine("<body >");
         sb.AppendLine($"<h1>{title}</h1>");
-        sb.AppendLine("<p><a href=\"/\">Home</a></p>");
+        sb.AppendLine("<p><a href=\"/\">Home</a> | <a href=\"/files\">Files</a> | <a href=\"/about\">About</a></p>");
         sb.AppendLine("<span class=\"results\" style=\"color: red;\"></span>");
     }
 
-    public static async Task GenerateUnAuthPage(StringBuilder sb, string msg)
+    public static StringBuilder GenerateUnAuthPage(StringBuilder sb, string msg)
     {
         DBg.d(LogLevel.Trace, "GenerateUnAuthPage");
         // get all the lists
 
         GenerateHTMLHead(sb, "Unauthorized");
 
-        
+
         sb.AppendLine($"<p style=\"color: red;\">{msg}</p>");
         sb.AppendLine("<p>Go back to <a href=\"/login\">the login page?</a></p>");
         GeneratePageFooter(sb);
+        return sb;
     }
 
 
 
-    public static async Task<StringBuilder> Generate404Page(string requestPath, string userInfo)
+    public static StringBuilder Generate404Page(string requestPath, string userInfo)
     {
         DBg.d(LogLevel.Trace, "Generate404Page");
         // get all the lists
@@ -71,8 +72,8 @@ public static class GlobalStatic
         GenerateHTMLHead(sb, "404 Not Found");
 
         //sb.AppendLine($"<h1 class=\"indextitle\">404</h1>");
-        sb.AppendLine($"<p style=\"color: red;\">Page not found</p>");
-        sb.AppendLine($"<p>Requested path: {requestPath}</p>");
+        sb.AppendLine($"<p style=\"color: red;\">Page not found: {requestPath}</p>");
+        
         sb.AppendLine($"<p>You are: {userInfo}</p>");
         sb.AppendLine($"<p>Go back to <a href=\"{GlobalConfig.index}\">the index page?</a></p>");
         GeneratePageFooter(sb);
@@ -99,5 +100,92 @@ public static class GlobalStatic
         staticAboutPage = sb.ToString();
     }
 
+    public static string uploadJS = @"
+    function uploadFiles() {
+        // Try directory input first, fallback to files input
+        var fileInputDir = document.getElementById('fileInputDir');
+        var fileInputFiles = document.getElementById('fileInputFiles');
+        var files = fileInputDir.files.length > 0 ? fileInputDir.files : fileInputFiles.files;
+        var totalFiles = files.length;
+        var progressBar = document.getElementById('progressBar');
+        var progressLabel = document.getElementById('progressLabel');
+        var statusDiv = document.getElementById('status');
+
+        // Get the antiforgery token from the form
+        var tokenInput = document.getElementById('antiforgeryToken');
+        var token = tokenInput ? tokenInput.value : '';
+
+        if (totalFiles === 0) {
+            statusDiv.innerText = 'No files selected.';
+            return;
+        }
+
+        let currentFile = 0;
+
+ 
+
+        function uploadNextFile() {
+            if (currentFile >= totalFiles) {
+                statusDiv.innerText = 'All files uploaded.';
+                progressBar.value = 0;
+                progressLabel.innerText = '';
+                window.location.href = '/files';
+                return;
+            }
+
+            var formData = new FormData();
+            formData.append('file', files[currentFile]);
+            formData.append('__RequestVerificationToken', token);
+
+            // Only append webkitRelativePath if present
+            if (files[currentFile].webkitRelativePath !== undefined && files[currentFile].webkitRelativePath !== '') {
+                formData.append('webkitRelativePath', files[currentFile].webkitRelativePath);
+            }
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/fileuploadxfer', true);
+
+            xhr.upload.onprogress = function (e) {
+                if (e.lengthComputable) {
+                    var percent = (e.loaded / e.total) * 100;
+                    progressBar.value = percent;
+                    progressLabel.innerText = 'Uploading ' + files[currentFile].name + ' (' + (currentFile + 1) + ' of ' + totalFiles + ')';
+                }
+            };
+
+            xhr.onload = function () {
+                statusDiv.innerText = xhr.responseText;
+                progressBar.value = 0;
+                if (xhr.status === 200) {
+                    currentFile++;
+                    uploadNextFile();
+                } else {
+                    progressLabel.innerText = '';
+                    // Provide more explanation for possible server errors
+                    let errorMsg = 'Upload failed for ' + files[currentFile].name + '. ';
+                    if (xhr.status === 413) {
+                        errorMsg += 'The file is too large for the server to accept (HTTP 413: Content Too Large).';
+                    } else if (xhr.status >= 500) {
+                        errorMsg += 'A server error occurred (HTTP ' + xhr.status + ').';
+                    } else if (xhr.status >= 400) {
+                        errorMsg += 'A client or server error occurred (HTTP ' + xhr.status + ').';
+                    } else {
+                        errorMsg += 'Unknown error; check server output/log.';
+                    }
+                    statusDiv.innerText = errorMsg;
+                    statusDiv.style.color = 'red';
+                }
+            };
+
+            xhr.onerror = function () {
+                progressLabel.innerText = '';
+                statusDiv.innerText = 'Upload failed for ' + files[currentFile].name;
+                statusDiv.style.color = 'red';
+            };
+
+            xhr.send(formData);
+        }
+           uploadNextFile();
+    }";
 }
 

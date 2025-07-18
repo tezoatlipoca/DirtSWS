@@ -29,7 +29,7 @@ Options:
 - sitecss - provide the filename (in your wwwroot or elsewhere) of the stylesheet you want to use for the administrative pages. 
 - sitepng - provide the icon image file (in your wwwroot or elsewhere) to use for favicon.ico for the administrative pages. 
 - index - what page/file requests for `/` are sent to. 
-- maxuploadsize - largest allowed upload _individual_ file size in bytes; there is no guard against 
+- maxuploadsize - largest allowed upload _individual_ file size in bytes; there is no guard against total `wwwroot` content size.
 
 # Using
 Run the executable as above. 
@@ -76,6 +76,10 @@ pwd
 ## Windows
 1. Dump the program somewhere
 2. create a powershell script or batch file that runs it with all the parameters you want.
+
+NEW: There's also a Windows Installer which includes the default stylesheet, icon and a
+powershell script that runs Dirt with all command line parameters specified. 
+
 
 No work has been done to make DirtSWS run as a Windows Service yet, but supposedly its possible
 with the use of 3rd party tools such as https://nssm.cc/ (the Non-Sucking Service Manager (for Windows)).

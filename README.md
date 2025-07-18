@@ -39,9 +39,7 @@ AND that port is open in the computer's firewall
 then pointing a browser to `http://<your hostname>/about` should show: 
 
 > **About**
-> This is a simple web server written in C# using ASP.NET Core.
-
-(that's all that special endpoint does)
+> DirtSWS is a simple, single binary, self-hosted static file webserver that provides simple file management.
 
 Other special endpoints:
 `/files` - shows all files in the `wwwroot` folder with your static files

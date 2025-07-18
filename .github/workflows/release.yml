@@ -1,0 +1,302 @@
+name: Release Build
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    outputs:
+      winzip: ${{ steps.winzip.outputs.path }}
+      nsis: ${{ steps.nsis.outputs.path }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Set version variable
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Build
+        run: |
+          dotnet publish -c Release -r win-x64
+
+      - name: Archive Windows Binary
+        id: winzip
+        shell: pwsh
+        run: |
+          cd bin/Release/net8.0/win-x64/publish
+          7z a -tzip DirtSWS_${env:VERSION}_win-x64.zip DirtSWS.exe
+          cd -
+          mv bin/Release/net8.0/win-x64/publish/DirtSWS_${env:VERSION}_win-x64.zip .
+          echo "path=$(pwd)/DirtSWS_${env:VERSION}_win-x64.zip" >> $GITHUB_OUTPUT
+
+      - name: Copy EXE to win.installer
+        shell: pwsh
+        run: |
+          cp bin/Release/net8.0/win-x64/publish/DirtSWS.exe win.installer/
+
+      - name: Install NSIS
+        run: choco install nsis -y
+
+      - name: Ensure win.installer directory exists
+        run: mkdir -Force win.installer
+        shell: pwsh
+
+      - name: Cleanup previous installer if exists
+        run: Remove-Item win.installer\DirtSWS_${env:VERSION}_win-x64.setup.exe -ErrorAction SilentlyContinue
+        shell: pwsh
+
+      - name: Build NSIS Installer
+        run: |
+          $outfile = "OutFile `"DirtSWS_$env:VERSION`_win-x64.setup.exe`""
+          (Get-Content win.installer/install.nsi) -replace 'OutFile ".*"', $outfile | Set-Content win.installer/install.nsi
+          Push-Location win.installer
+          & "C:\Program Files (x86)\NSIS\makensis.exe" "install.nsi"
+          Pop-Location
+        shell: pwsh
+
+      - name: Upload Windows Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifacts
+          path: |
+            DirtSWS_${{ env.VERSION }}_win-x64.zip
+            win.installer/DirtSWS_${{ env.VERSION }}_win-x64.setup.exe
+
+  build-linux:
+    runs-on: ubuntu-latest
+    outputs:
+      linuxtar: ${{ steps.linuxtar.outputs.path }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Set version variable
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Build
+        run: |
+          dotnet publish -c Release -r linux-x64
+
+      - name: Archive Linux Binary
+        id: linuxtar
+        run: |
+          tar czf DirtSWS_${VERSION}_linux_x64.tar.gzip bin/Release/net8.0/linux-x64/publish/DirtSWS
+          echo "path=$(pwd)/DirtSWS_${VERSION}_linux_x64.tar.gzip" >> $GITHUB_OUTPUT
+
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifact
+          path: DirtSWS_${{ env.VERSION }}_linux_x64.tar.gzip
+
+  create-deb:
+    runs-on: ubuntu-latest
+    needs: build-linux
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set version variable
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+        shell: bash
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+      - name: Install dotnet-deb
+        run: dotnet tool install -g dotnet-deb
+      - name: Build Release
+        run: dotnet publish -c Release -r linux-x64
+      - name: Create DEB Package
+        run: dotnet-deb -c Release
+      - name: Rename DEB Package
+        run: |
+          debfile=$(ls bin/Release/net8.0/linux-x64/*.deb | head -n 1)
+          mv "$debfile" "DirtSWS_${VERSION}_linux_x64.deb"
+      - name: Upload DEB Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deb-artifact
+          path: DirtSWS_${{ env.VERSION }}_linux_x64.deb
+
+  create-snap:
+    runs-on: ubuntu-latest
+    needs: build-linux
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set version variable
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+        shell: bash
+      - name: Build with dotnet
+        run: |
+          dotnet publish -c Release -r linux-x64
+
+      - name: Install Snapcraft and LXD
+        run: |
+          sudo snap install snapcraft --classic
+          sudo snap install lxd
+          max_retries=3
+          count=0
+          while [ $count -lt $max_retries ]; do
+            if sudo lxd init --auto; then
+              echo "LXD initialized successfully"
+              break
+            fi
+            count=$((count + 1))
+            echo "LXD init attempt $count failed, retrying..."
+            sleep 5
+          done
+          if [ $count -eq $max_retries ]; then
+            echo "Failed to initialize LXD after $max_retries attempts"
+            exit 1
+          fi
+
+      - name: Setup network for LXD
+        run: |
+          sudo lxc network create lxdbr0 || true
+          sudo lxc network attach-profile lxdbr0 default eth0 || true
+
+      - name: Build Snap Package
+        run: |
+          snapcraft --destructive-mode --verbose
+
+      - name: Rename Snap Package
+        run: |
+          snapfile=$(ls *.snap | head -n 1)
+          mv "$snapfile" "DirtSWS_${VERSION}_linux_x64.snap"
+      - name: Upload Snap Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: snap-artifact
+          path: DirtSWS_${{ env.VERSION }}_linux_x64.snap
+
+  create-rpm:
+    runs-on: ubuntu-latest
+    needs: build-linux
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set version variable
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Install fpm
+        run: sudo gem install --no-document fpm
+
+      - name: Build with dotnet
+        run: dotnet publish -c Release -r linux-x64
+
+      - name: Create RPM Package
+        run: |
+          mkdir -p rpm-root/usr/local/bin
+          cp bin/Release/net8.0/linux-x64/publish/DirtSWS rpm-root/usr/local/bin/
+          fpm -s dir -t rpm -n DirtSWS -v ${VERSION} --prefix /usr/local/bin rpm-root/usr/local/bin/DirtSWS
+
+      - name: Rename RPM Package
+        run: |
+          rpmfile=$(ls *.rpm | head -n 1)
+          mv "$rpmfile" "DirtSWS_${VERSION}_linux_x64.rpm"
+
+      - name: Upload RPM Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpm-artifact
+          path: DirtSWS_${{ env.VERSION }}_linux_x64.rpm
+
+  package-chocolatey:
+    runs-on: ubuntu-latest
+    needs: build-windows
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download Windows Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-artifacts
+          path: ./windows-artifacts
+
+      - name: Install mono
+        run: sudo apt-get update && sudo apt-get install -y mono-complete
+
+      - name: Download nuget.exe
+        run: wget https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
+
+      - name: Prepare Chocolatey package directory
+        run: |
+          mkdir -p nuget/tools
+          # cp ./nuget/DirtSWS.nuspec nuget/
+          # cp ./nuget/tools/* nuget/tools/
+
+      - name: Pack Chocolatey package
+        run: mono nuget.exe pack nuget/DirtSWS.nuspec
+
+      - name: Rename Chocolatey package for consistency
+        run: |
+          version=$(grep '<version>' nuget/DirtSWS.nuspec | sed -E 's/.*<version>(.+)<\/version>.*/\1/')
+          mv "DirtSWS.$version.nupkg" "DirtSWS_${version}_win-x64.nupkg"
+
+      - name: Upload Chocolatey Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chocolatey-nupkg
+          path: DirtSWS_*.nupkg
+
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [build-windows, build-linux, create-deb, create-snap, create-rpm, package-chocolatey]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-artifacts
+          path: ./
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-artifact
+          path: ./
+      - uses: actions/download-artifact@v4
+        with:
+          name: deb-artifact
+          path: ./
+      - uses: actions/download-artifact@v4
+        with:
+          name: snap-artifact
+          path: ./
+      - uses: actions/download-artifact@v4
+        with:
+          name: chocolatey-nupkg
+          path: ./
+      - uses: actions/download-artifact@v4
+        with:
+          name: rpm-artifact
+          path: ./
+
+      - name: Set version variable
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Upload All Release Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            **/DirtSWS_${{ env.VERSION }}_win-x64.zip
+            **/DirtSWS_${{ env.VERSION }}_win-x64.setup.exe
+            **/DirtSWS_${{ env.VERSION }}_linux_x64.tar.gzip
+            **/DirtSWS_${{ env.VERSION }}_linux_x64.deb
+            **/DirtSWS_${{ env.VERSION }}_linux_x64.snap
+            **/DirtSWS_${{ env.VERSION }}_linux_x64.rpm
+            **/DirtSWS.*.nupkg
+

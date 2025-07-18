@@ -120,6 +120,10 @@ jobs:
         run: dotnet tool install -g dotnet-deb
       - name: Build Release
         run: dotnet publish -c Release -r linux-x64
+      - name: Copy extra files for DEB
+        run: |
+          cp dirt_default_icon.jpg bin/Release/net8.0/linux-x64/publish/
+          cp dirt_default.css bin/Release/net8.0/linux-x64/publish/
       - name: Create DEB Package
         run: dotnet-deb -c Release
       - name: Rename DEB Package
@@ -132,132 +136,40 @@ jobs:
           name: deb-artifact
           path: DirtSWS_${{ env.VERSION }}_linux_x64.deb
 
-  create-snap:
-    runs-on: ubuntu-latest
-    needs: build-linux
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set version variable
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
-        shell: bash
-      - name: Build with dotnet
-        run: |
-          dotnet publish -c Release -r linux-x64
-
-      - name: Install Snapcraft and LXD
-        run: |
-          sudo snap install snapcraft --classic
-          sudo snap install lxd
-          max_retries=3
-          count=0
-          while [ $count -lt $max_retries ]; do
-            if sudo lxd init --auto; then
-              echo "LXD initialized successfully"
-              break
-            fi
-            count=$((count + 1))
-            echo "LXD init attempt $count failed, retrying..."
-            sleep 5
-          done
-          if [ $count -eq $max_retries ]; then
-            echo "Failed to initialize LXD after $max_retries attempts"
-            exit 1
-          fi
-
-      - name: Setup network for LXD
-        run: |
-          sudo lxc network create lxdbr0 || true
-          sudo lxc network attach-profile lxdbr0 default eth0 || true
-
-      - name: Build Snap Package
-        run: |
-          snapcraft --destructive-mode --verbose
-
-      - name: Rename Snap Package
-        run: |
-          snapfile=$(ls *.snap | head -n 1)
-          mv "$snapfile" "DirtSWS_${VERSION}_linux_x64.snap"
-      - name: Upload Snap Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: snap-artifact
-          path: DirtSWS_${{ env.VERSION }}_linux_x64.snap
-
   create-rpm:
     runs-on: ubuntu-latest
     needs: build-linux
     steps:
       - uses: actions/checkout@v3
-
       - name: Set version variable
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
         shell: bash
-
       - name: Install fpm
         run: sudo gem install --no-document fpm
-
       - name: Build with dotnet
         run: dotnet publish -c Release -r linux-x64
-
-      - name: Create RPM Package
+      - name: Copy extra files for RPM
         run: |
           mkdir -p rpm-root/usr/local/bin
           cp bin/Release/net8.0/linux-x64/publish/DirtSWS rpm-root/usr/local/bin/
-          fpm -s dir -t rpm -n DirtSWS -v ${VERSION} --prefix /usr/local/bin rpm-root/usr/local/bin/DirtSWS
-
+          cp dirt_default_icon.jpg rpm-root/usr/local/bin/
+          cp dirt_default.css rpm-root/usr/local/bin/
+      - name: Create RPM Package
+        run: |
+          fpm -s dir -t rpm -n DirtSWS -v ${VERSION} --prefix /usr/local/bin rpm-root/usr/local/bin/DirtSWS rpm-root/usr/local/bin/dirt_default_icon.jpg rpm-root/usr/local/bin/dirt_default.css
       - name: Rename RPM Package
         run: |
           rpmfile=$(ls *.rpm | head -n 1)
           mv "$rpmfile" "DirtSWS_${VERSION}_linux_x64.rpm"
-
       - name: Upload RPM Artifact
         uses: actions/upload-artifact@v4
         with:
           name: rpm-artifact
           path: DirtSWS_${{ env.VERSION }}_linux_x64.rpm
 
-  package-chocolatey:
-    runs-on: ubuntu-latest
-    needs: build-windows
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Download Windows Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-artifacts
-          path: ./windows-artifacts
-
-      - name: Install mono
-        run: sudo apt-get update && sudo apt-get install -y mono-complete
-
-      - name: Download nuget.exe
-        run: wget https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
-
-      - name: Prepare Chocolatey package directory
-        run: |
-          mkdir -p nuget/tools
-          # cp ./nuget/DirtSWS.nuspec nuget/
-          # cp ./nuget/tools/* nuget/tools/
-
-      - name: Pack Chocolatey package
-        run: mono nuget.exe pack nuget/DirtSWS.nuspec
-
-      - name: Rename Chocolatey package for consistency
-        run: |
-          version=$(grep '<version>' nuget/DirtSWS.nuspec | sed -E 's/.*<version>(.+)<\/version>.*/\1/')
-          mv "DirtSWS.$version.nupkg" "DirtSWS_${version}_win-x64.nupkg"
-
-      - name: Upload Chocolatey Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: chocolatey-nupkg
-          path: DirtSWS_*.nupkg
-
-
   release:
     runs-on: ubuntu-latest
-    needs: [build-windows, build-linux, create-deb, create-snap, create-rpm, package-chocolatey]
+    needs: [build-windows, build-linux, create-deb, create-rpm]
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -273,16 +185,16 @@ jobs:
           path: ./
       - uses: actions/download-artifact@v4
         with:
-          name: snap-artifact
-          path: ./
-      - uses: actions/download-artifact@v4
-        with:
-          name: chocolatey-nupkg
-          path: ./
-      - uses: actions/download-artifact@v4
-        with:
           name: rpm-artifact
           path: ./
+      # - uses: actions/download-artifact@v4
+      #   with:
+      #     name: snap-artifact
+      #     path: ./
+      # - uses: actions/download-artifact@v4
+      #   with:
+      #     name: chocolatey-nupkg
+      #     path: ./
 
       - name: Set version variable
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
@@ -296,7 +208,7 @@ jobs:
             **/DirtSWS_${{ env.VERSION }}_win-x64.setup.exe
             **/DirtSWS_${{ env.VERSION }}_linux_x64.tar.gzip
             **/DirtSWS_${{ env.VERSION }}_linux_x64.deb
-            **/DirtSWS_${{ env.VERSION }}_linux_x64.snap
             **/DirtSWS_${{ env.VERSION }}_linux_x64.rpm
-            **/DirtSWS.*.nupkg
+            # **/DirtSWS_${{ env.VERSION }}_linux_x64.snap
+            # **/DirtSWS.*.nupkg
 

@@ -38,6 +38,8 @@ Section "Install"
 
   ; Add files
   File /oname=DirtSWS.exe "..\bin\Release\net8.0\win-x64\publish\DirtSWS.exe"
+  File "..\bin\Release\net8.0\win-x64\publish\dirt_default_icon.jpg"
+  File "..\bin\Release\net8.0\win-x64\publish\dirt_default.css"
 
   ; Check for existing version in registry
   ReadRegStr $R0 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\DirtSWS" "DisplayVersion"
@@ -83,6 +85,8 @@ SectionEnd
 Section "Uninstall"
   ; Remove files and folders
   Delete "$INSTDIR\DirtSWS.exe"
+  Delete "$INSTDIR\dirt_default_icon.jpg"
+  Delete "$INSTDIR\dirt_default.css"
   Delete "$INSTDIR\uninstall.exe"
   
   ; Remove shortcuts

@@ -38,5 +38,18 @@
   <Content Update="wwwroot\**\*" CopyToPublishDirectory="Never" />
   </ItemGroup>
 
+  <ItemGroup>
+  <Content Include="dirt_default_icon.jpg">
+    <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+  </Content>
+  <Content Include="dirt_default.css">
+    <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+  </Content>
+</ItemGroup>
+
+<ItemGroup>
+  <PackageReference Include="Packaging.Targets" Version="0.1.232" />
+</ItemGroup>
+
 
 </Project>

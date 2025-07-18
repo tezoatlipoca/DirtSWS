@@ -1,34 +1,35 @@
-# PowerShell script to run DirtSWS with all actual command line options
+# Example PowerShell script to run DirtSWS with all command line options
 
+# Set the path to your DirtSWS executable
 $exe = ".\DirtSWS.exe"
 
-# Set your desired values for each option below
-$port = 5000
-$bind = "*" # Use "*" for all IPs, or specify an IP
-$hostname = "http://localhost"
+# Example command line options (update these to match your actual options)
+# Replace with the actual options supported by DirtSWS
 $wwwroot = "wwwroot"
-$runlevel = "Information" # Valid: trace, debug, info, warn, error, critical
-$pwd = "Foo" # Leave empty for read-only static site
-$sitecss = "dirt_default.css" # Path or URL to stylesheet, or leave empty
-$sitepng = "dirt_default_icon.png" # Path or URL to favicon (PNG), or leave empty
-$siteinfo = "Owner Name, Contact Info"
+$port = 8080
+$bind = "0.0.0.0"
+$loglevel = "Information"
+$config = "config.json"
 $index = "index.html"
-$maxuploadsize = 104857600 # 100MB default
+$siteinfo = "My DirtSWS Instance"
+$cookieDomain = "localhost"
+$otherOption = "value"
 
+# Build the argument list
 $args = @(
-    "--port=$port"
-    "--bind=$bind"
-    "--hostname=$hostname"
-    "--wwwroot=$wwwroot"
-    "--runlevel=$runlevel"
-    "--pwd=$pwd"
-    "--sitecss=$sitecss"
-    "--sitepng=$sitepng"
-    "--siteinfo=$siteinfo"
-    "--index=$index"
-    "--maxuploadsize=$maxuploadsize"
+    "--wwwroot", $wwwroot
+    "--port", $port
+    "--bind", $bind
+    "--loglevel", $loglevel
+    "--config", $config
+    "--index", $index
+    "--siteinfo", "`"$siteinfo`""
+    "--cookieDomain", $cookieDomain
+    # Add other options here as needed
+    # "--otherOption", $otherOption
 )
 
+# Run DirtSWS with all options
 Write-Host "Running DirtSWS with options:"
 Write-Host "$exe $($args -join ' ')"
-& $exe $args
+& $exe @args

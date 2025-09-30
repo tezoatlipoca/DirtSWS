@@ -100,6 +100,7 @@ The ASP.NET.CORE runtimes look to this file for various non-default settings; in
 tells the Kestrel webserver engine to not spam a bunch of `info` msgs about every. single. page. request to STDOUT. 
 
 # Future work
+0. write chromium and gecko plugins that sling stuff direct to your DirtSWS w/ password.
 0. get this working/cross-compiling for MacOS, linux-arm64 etc. etc. would be nice to have binaries for every platform .NET Core supports (I just don't have any way to test these)
 1. Secure host (https) w/ SSL Certificates - although you can get this for cheap if you use NGINX _in front_ of DirtSWS
 2. Automatic maintenance/renewal of SSL certficiates w/ LetsEncrypt.org
